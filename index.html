@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nursery Management Application</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@latest/font/Lucide.css">
+    <style>
+        /* Use Inter font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Tailwind gray-50 */
+            color: #374151; /* Default text color */
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Active nav link */
+        .nav-link-active { background-color: #e0f2fe; color: #0ea5e9; font-weight: 600; }
+        /* Sections visibility */
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        /* Modal styles */
+        .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #ffffff; margin: 10% auto; padding: 25px; border-radius: 8px; width: 90%; max-width: 600px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        /* Adjusted close button position for LTR */
+        .modal-close { position: absolute; top: 10px; right: 15px; font-size: 24px; font-weight: bold; cursor: pointer; color: #71717a; }
+        .modal-close:hover { color: #3f3f46; }
+        /* Date picker icon */
+        input[type="date"]::-webkit-calendar-picker-indicator { opacity: 1; cursor: pointer; }
+        /* Basic loading/error styles */
+        .loading-text { color: #6b7280; font-style: italic; }
+        .error-text { color: #ef4444; font-weight: bold; }
+        /* Add some padding to table cells and set text-align to left for LTR */
+        td, th { padding: 0.75rem; /* 12px */ text-align: left; }
+    </style>
+</head>
+<body class="flex h-screen">
+
+    <aside class="w-64 bg-white shadow-md flex flex-col p-4 transition-transform duration-300 ease-in-out fixed h-full z-40 md:relative md:translate-x-0" id="sidebar">
+        <div class="flex items-center justify-between mb-6">
+             <h1 class="text-2xl font-bold text-sky-600">My Nursery</h1>
+            <button id="close-sidebar" class="md:hidden text-gray-600 hover:text-gray-800">
+                <i class="lucide lucide-x"></i>
+            </button>
+        </div>
+        <nav class="flex-grow space-y-2">
+            <a href="#dashboard" class="nav-link flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-100 nav-link-active">
+                <i class="lucide lucide-layout-dashboard mr-3"></i> Dashboard
+            </a>
+            <a href="#children" class="nav-link flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                <i class="lucide lucide-baby mr-3"></i> Children
+            </a>
+            <a href="#parents" class="nav-link flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                <i class="lucide lucide-users mr-3"></i> Parents
+            </a>
+            <a href="#income" class="nav-link flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                <i class="lucide lucide-trending-up mr-3"></i> Income
+            </a>
+            <a href="#expenses" class="nav-link flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                <i class="lucide lucide-trending-down mr-3"></i> Expenses
+            </a>
+            <a href="#attendance" class="nav-link flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                <i class="lucide lucide-clipboard-check mr-3"></i> Attendance
+            </a>
+            <a href="#reports" class="nav-link flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                <i class="lucide lucide-bar-chart-3 mr-3"></i> Reports and Taxes
+            </a>
+            <a href="#documents" class="nav-link flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                <i class="lucide lucide-folder-archive mr-3"></i> Documents
+            </a>
+            <a href="#settings" class="nav-link flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                <i class="lucide lucide-settings mr-3"></i> Settings
+            </a>
+        </nav>
+        <div class="mt-auto">
+             <div class="p-2 text-sm text-gray-500">
+                Version 1.0.3 (Online) </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-6 overflow-y-auto">
+        <button id="open-sidebar" class="md:hidden mb-4 p-2 bg-white rounded-md shadow">
+            <i class="lucide lucide-menu"></i>
+        </button>
+
+        <section id="dashboard" class="content-section active">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Dashboard</h2>
+            <div class="mb-4 p-4 bg-white rounded-lg shadow">
+                <h3 class="text-lg font-medium text-gray-700" id="daycare-name-type">
+                     <span class="loading-text">Loading Settings...</span>
+                </h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-lg shadow text-center">
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Active Children</h4>
+                    <p class="text-3xl font-bold text-blue-600" id="active-children-count">...</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow text-center">
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Monthly Income</h4>
+                    <p class="text-3xl font-bold text-green-600" id="monthly-income">...</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow text-center">
+                     <h4 class="text-sm font-medium text-gray-500 mb-1">Monthly Expenses</h4>
+                    <p class="text-3xl font-bold text-red-600" id="monthly-expenses">...</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg shadow mb-6">
+                 <h4 class="text-lg font-semibold mb-2 text-gray-700">Income and Expenses (Last 6 months)</h4>
+                <div class="h-64 bg-gray-200 rounded flex items-center justify-center text-gray-500">
+                     (Chart currently unavailable)
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg shadow mb-6">
+                 <h4 class="text-lg font-semibold mb-3 text-gray-700">Important Reminders</h4>
+                <ul class="space-y-2" id="reminders-list">
+                     <li class="loading-text">Loading Reminders...</li>
+                    </ul>
+            </div>
+
+            <div>
+                 <h4 class="text-lg font-semibold mb-3 text-gray-700">Quick Links</h4>
+                <div class="flex flex-wrap gap-4">
+                    <button class="bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-4 rounded-lg flex items-center shadow transition duration-150 ease-in-out" onclick="navigateTo('attendance')">
+                        <i class="lucide lucide-clipboard-check mr-2"></i> Record Attendance for Today
+                    </button>
+                    <button class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg flex items-center shadow transition duration-150 ease-in-out" onclick="openModal('add-expense-modal')">
+                        <i class="lucide lucide-plus-circle mr-2"></i> Add New Expense
+                    </button>
+                     <button class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg flex items-center shadow transition duration-150 ease-in-out" onclick="openModal('add-income-modal')">
+                        <i class="lucide lucide-plus-circle mr-2"></i> Add New Income
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="children" class="content-section">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold text-gray-800">Children</h2>
+                <button class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg flex items-center shadow transition duration-150 ease-in-out" onclick="openModal('add-child-modal')">
+                    <i class="lucide lucide-plus mr-2"></i> Add New Child
+                </button>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow overflow-x-auto">
+                <table class="w-full text-left border-collapse"> <thead>
+                        <tr class="border-b">
+                            <th>Full Name</th>
+                            <th>Date of Birth (Age)</th>
+                            <th>Parent/Guardian</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="children-table-body">
+                         <tr><td colspan="5" class="text-center loading-text py-4">Loading...</td></tr>
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="parents" class="content-section">
+             <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold text-gray-800">Parents</h2>
+                <button class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg flex items-center shadow transition duration-150 ease-in-out" onclick="openModal('add-parent-modal')">
+                    <i class="lucide lucide-plus mr-2"></i> Add New Parent/Guardian
+                </button>
+            </div>
+             <div class="bg-white p-4 rounded-lg shadow overflow-x-auto">
+                 <table class="w-full text-left border-collapse"> <thead>
+                        <tr class="border-b">
+                            <th>Full Name</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="parents-table-body">
+                         <tr><td colspan="4" class="text-center loading-text py-4">Loading...</td></tr>
+                          </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="income" class="content-section">
+              <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold text-gray-800">Income</h2>
+                <button class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg flex items-center shadow transition duration-150 ease-in-out" onclick="openModal('add-income-modal')">
+                    <i class="lucide lucide-plus mr-2"></i> Add New Income
+                </button>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow mb-4 flex flex-wrap gap-4 items-end">
+                 <div>
+                      <label for="income-date-from" class="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                      <input type="date" id="income-date-from" name="income-date-from" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500">
+                 </div>
+                 <div>
+                      <label for="income-date-to" class="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                      <input type="date" id="income-date-to" name="income-date-to" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500">
+                 </div>
+                 <div>
+                      <label for="income-source" class="block text-sm font-medium text-gray-700 mb-1">Source</label>
+                      <select id="income-source" name="income-source" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 bg-white">
+                            <option value="">All</option>
+                            <option value="parent_contribution">Parent Contribution</option>
+                            <option value="govt_support">Government Support (BC)</option>
+                            <option value="late_fees">Late Fees</option>
+                            <option value="other">Other</option>
+                      </select>
+                 </div>
+                 <button id="filter-income-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg shadow transition duration-150 ease-in-out self-end">
+                      <i class="lucide lucide-filter mr-2"></i> Filter
+                 </button>
+            </div>
+              <div class="bg-white p-4 rounded-lg shadow overflow-x-auto">
+                 <table class="w-full text-left border-collapse"> <thead>
+                        <tr class="border-b">
+                            <th>Date</th>
+                            <th>Source</th>
+                            <th>Amount</th>
+                            <th>Child/Parent</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="income-table-body">
+                         <tr><td colspan="6" class="text-center loading-text py-4">Loading...</td></tr>
+                           </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="expenses" class="content-section">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold text-gray-800">Expenses</h2>
+                <button class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg flex items-center shadow transition duration-150 ease-in-out" onclick="openModal('add-expense-modal')">
+                    <i class="lucide lucide-plus mr-2"></i> Add New Expense
+                </button>
+            </div>
+             <div class="bg-white p-4 rounded-lg shadow mb-4 flex flex-wrap gap-4 items-end">
+                 <div>
+                      <label for="expense-date-from" class="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                      <input type="date" id="expense-date-from" name="expense-date-from" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500">
+                 </div>
+                 <div>
+                      <label for="expense-date-to" class="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                      <input type="date" id="expense-date-to" name="expense-date-to" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500">
+                 </div>
+                 <div>
+                      <label for="expense-category" class="block text-sm font-medium text-gray-700 mb-1">Expense Type</label>
+                      <select id="expense-category" name="expense-category" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 bg-white">
+                            <option value="">All</option>
+                            <option value="food">Food</option>
+                            <option value="toys">Toys</option>
+                            <option value="insurance">Insurance</option>
+                            <option value="supplies">Supplies</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="other">Other</option>
+                      </select>
+                 </div>
+                 <button id="filter-expenses-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg shadow transition duration-150 ease-in-out self-end">
+                      <i class="lucide lucide-filter mr-2"></i> Filter
+                 </button>
+            </div>
+              <div class="bg-white p-4 rounded-lg shadow overflow-x-auto">
+                 <table class="w-full text-left border-collapse"> <thead>
+                        <tr class="border-b">
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Vendor</th>
+                            <th>Description</th>
+                            <th>Invoice</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenses-table-body">
+                         <tr><td colspan="7" class="text-center loading-text py-4">Loading...</td></tr>
+                           </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="attendance" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Record Attendance</h2>
+            <div class="bg-white p-4 rounded-lg shadow mb-4">
+                <label for="attendance-date-input" class="block text-sm font-medium text-gray-700 mb-1">Select Date:</label>
+                <input type="date" id="attendance-date-input" name="attendance-date" class="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500" value="">
+            </div>
+
+            <div class="bg-white p-4 rounded-lg shadow mb-4">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">List of Active Children for Today</h3>
+                <div id="attendance-list" class="space-y-4">
+                     <p class="loading-text">Loading Children List...</p>
+                    </div>
+            </div>
+
+            <div class="flex justify-between items-center flex-wrap gap-4">
+                 <div class="flex gap-2">
+                      <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg text-sm shadow transition duration-150 ease-in-out opacity-50 cursor-not-allowed">
+                           Mark All Present (Full Day)
+                      </button>
+                      <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg text-sm shadow transition duration-150 ease-in-out opacity-50 cursor-not-allowed">
+                           Clear All
+                      </button>
+                 </div>
+                 <button id="save-attendance-btn" class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg shadow transition duration-150 ease-in-out">
+                      <i class="lucide lucide-save mr-2"></i> Save Attendance for Today
+                 </button>
+            </div>
+             <div class="mt-6 bg-white p-4 rounded-lg shadow">
+                   <h3 class="text-lg font-semibold text-gray-700 mb-3">View Attendance Log</h3>
+                   <p class="text-gray-500">(Not implemented yet)</p>
+                   </div>
+        </section>
+
+        <section id="reports" class="content-section">
+             <h2 class="text-2xl font-semibold text-gray-800 mb-6">Reports and Taxes</h2>
+              <p class="text-gray-500 mb-6">(Reports section not fully implemented yet)</p>
+            <div class="bg-white p-4 rounded-lg shadow mb-6 opacity-50">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">Profit and Loss Report</h3>
+                </div>
+            <div class="bg-white p-4 rounded-lg shadow mb-6 opacity-50">
+                 <h3 class="text-lg font-semibold text-gray-700 mb-3">Expense Report by Type</h3>
+                 </div>
+              <div class="bg-white p-4 rounded-lg shadow mb-6 opacity-50">
+                   <h3 class="text-lg font-semibold text-gray-700 mb-3">Monthly Attendance Report (RSGE)</h3>
+                   </div>
+            <div class="bg-white p-4 rounded-lg shadow mb-6 opacity-50">
+                 <h3 class="text-lg font-semibold text-gray-700 mb-3">Contribution Estimate (RRQ/RQAP)</h3>
+                 </div>
+              <div class="bg-white p-4 rounded-lg shadow mb-6 opacity-50">
+                   <h3 class="text-lg font-semibold text-gray-700 mb-3">Prepare Tax Receipt Data for Parents</h3>
+                   </div>
+        </section>
+
+        <section id="documents" class="content-section">
+               <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold text-gray-800">Documents</h2>
+                <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2 px-4 rounded-lg flex items-center shadow transition duration-150 ease-in-out" onclick="openModal('upload-doc-modal')">
+                    <i class="lucide lucide-upload mr-2"></i> Upload New Document
+                </button>
+            </div>
+               <div class="bg-white p-4 rounded-lg shadow overflow-x-auto">
+                 <table class="w-full text-left border-collapse"> <thead>
+                        <tr class="border-b">
+                            <th>Document Type</th>
+                            <th>Description</th>
+                            <th>Upload Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="documents-table-body">
+                         <tr><td colspan="4" class="text-center loading-text py-4">Loading...</td></tr>
+                           </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="settings" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Settings</h2>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <form id="settings-form" class="space-y-4">
+                    <div>
+                        <label for="setting-daycare-name" class="block text-sm font-medium text-gray-700 mb-1">Nursery Name</label>
+                        <input type="text" id="setting-daycare-name" name="daycare_name" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500">
+                    </div>
+                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nursery Type</label>
+                        <div class="flex gap-4">
+                             <label class="flex items-center">
+                                  <input type="radio" name="daycare_type" value="rsge" class="focus:ring-sky-500 h-4 w-4 text-sky-600 border-gray-300">
+                                  <span class="ml-2 text-sm text-gray-700">RSGE (Recognized Service)</span>
+                             </label>
+                             <label class="flex items-center">
+                                  <input type="radio" name="daycare_type" value="private" class="focus:ring-sky-500 h-4 w-4 text-sky-600 border-gray-300">
+                                  <span class="ml-2 text-sm text-gray-700">Private</span>
+                             </label>
+                        </div>
+                    </div>
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label for="setting-home-usage" class="block text-sm font-medium text-gray-700 mb-1">Home Usage Percentage (%)</label>
+                            <input type="number" id="setting-home-usage" name="home_usage_percentage" min="0" max="100" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500">
+                          </div>
+                          <div>
+                            <label for="setting-car-usage" class="block text-sm font-medium text-gray-700 mb-1">Car Usage Percentage (%)</label>
+                            <input type="number" id="setting-car-usage" name="car_usage_percentage" min="0" max="100" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500">
+                          </div>
+                     </div>
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label for="setting-neq" class="block text-sm font-medium text-gray-700 mb-1">NEQ Number (Optional)</label>
+                            <input type="text" id="setting-neq" name="neq_number" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500">
+                          </div>
+                          <div>
+                            <label for="setting-insurance-policy" class="block text-sm font-medium text-gray-700 mb-1">Insurance Policy Number (Optional)</label>
+                            <input type="text" id="setting-insurance-policy" name="insurance_policy_number" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500">
+                          </div>
+                     </div>
+                      <div>
+                        <label for="setting-insurance-expiry" class="block text-sm font-medium text-gray-700 mb-1">Insurance Expiry Date (Optional)</label>
+                        <input type="date" id="setting-insurance-expiry" name="insurance_expiry_date" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500">
+                    </div>
+                    <div class="text-left pt-4"> <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-5 rounded-lg shadow transition duration-150 ease-in-out">
+                              <i class="lucide lucide-save mr-2"></i> Save Changes
+                         </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="add-child-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('add-child-modal')">&times;</span>
+            <h3 class="text-xl font-semibold mb-4 text-gray-800">Add New Child</h3>
+            <form id="add-child-form" class="space-y-3">
+                <input type="hidden" id="edit-child-id" name="childId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label for="child-first-name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                        <input type="text" id="child-first-name" name="first_name" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                    </div>
+                    <div>
+                        <label for="child-last-name" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                        <input type="text" id="child-last-name" name="last_name" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                    </div>
+                </div>
+                 <div>
+                    <label for="child-dob" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                    <input type="date" id="child-dob" name="dob" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                </div>
+                 <div>
+                    <label for="child-parent" class="block text-sm font-medium text-gray-700 mb-1">Main Parent/Guardian</label>
+                    <select id="child-parent" name="parent_id" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm bg-white">
+                        <option value="">Select Parent/Guardian...</option>
+                        </select>
+                    <button type="button" class="text-sm text-blue-600 hover:underline mt-1" onclick="openModal('add-parent-modal');">Or Add New Parent/Guardian</button>
+                </div>
+                 <div>
+                    <label for="child-emergency-contact" class="block text-sm font-medium text-gray-700 mb-1">Emergency Information</label>
+                    <textarea id="child-emergency-contact" name="emergency_contact" rows="2" class="w-full p-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+                </div>
+                <div>
+                    <label for="child-allergies" class="block text-sm font-medium text-gray-700 mb-1">Allergies and Medications</label>
+                    <textarea id="child-allergies" name="allergies" rows="2" class="w-full p-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+                </div>
+                 <div>
+                    <label for="child-notes" class="block text-sm font-medium text-gray-700 mb-1">Notes (Sleeping habits, eating...)</label>
+                    <textarea id="child-notes" name="notes" rows="3" class="w-full p-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+                </div>
+                <div class="text-right pt-3"> <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg mr-2" onclick="closeModal('add-child-modal')">Cancel</button>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg">Save Child</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="add-parent-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('add-parent-modal')">&times;</span>
+            <h3 class="text-xl font-semibold mb-4 text-gray-800">Add New Parent/Guardian</h3>
+            <form id="add-parent-form" class="space-y-3">
+                <input type="hidden" id="edit-parent-id" name="parentId">
+                <div>
+                    <label for="parent-full-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input type="text" id="parent-full-name" name="name" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                </div>
+                 <div>
+                    <label for="parent-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                    <input type="tel" id="parent-phone" name="phone" class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                </div>
+                 <div>
+                    <label for="parent-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="parent-email" name="email" class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div>
+                    <label for="parent-address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                    <textarea id="parent-address" name="address" rows="2" class="w-full p-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+                </div>
+                <div class="text-right pt-3"> <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg mr-2" onclick="closeModal('add-parent-modal')">Cancel</button>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg">Save Parent/Guardian</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="add-income-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('add-income-modal')">&times;</span>
+             <h3 class="text-xl font-semibold mb-4 text-gray-800">Add New Income</h3>
+            <form id="add-income-form" class="space-y-3">
+                 <input type="hidden" id="edit-income-id" name="incomeId">
+                 <div>
+                    <label for="income-modal-date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                    <input type="date" id="income-modal-date" name="date" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                </div>
+                 <div>
+                      <label for="income-modal-source" class="block text-sm font-medium text-gray-700 mb-1">Source</label>
+                      <select id="income-modal-source" name="source" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm bg-white">
+                            <option value="">Select Source...</option>
+                            <option value="parent_contribution">Parent Contribution</option>
+                            <option value="govt_support">Government Support (BC)</option>
+                            <option value="late_fees">Late Fees</option>
+                            <option value="other">Other</option>
+                      </select>
+                 </div>
+                 <div id="income-parent-field" class="hidden">
+                      <label for="income-modal-parent-child" class="block text-sm font-medium text-gray-700 mb-1">Child / Parent</label>
+                      <select id="income-modal-parent-child" name="related_child_id" class="w-full p-2 border border-gray-300 rounded-md shadow-sm bg-white">
+                            <option value="">Select...</option>
+                            </select>
+                      <p class="text-xs text-gray-500 mt-1">(For RSGE, Expected Amount: 9.10$)</p>
+                 </div>
+                 <div id="income-bc-month-field" class="hidden">
+                      <label for="income-modal-bc-month" class="block text-sm font-medium text-gray-700 mb-1">Month related to support (BC)</label>
+                      <input type="month" id="income-modal-bc-month" name="bc_month" class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                 </div>
+                 <div>
+                    <label for="income-modal-amount" class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                    <input type="number" step="0.01" id="income-modal-amount" name="amount" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                </div>
+                 <div>
+                    <label for="income-modal-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="income-modal-description" name="description" rows="2" class="w-full p-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+                </div>
+                <div class="text-right pt-3"> <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg mr-2" onclick="closeModal('add-income-modal')">Cancel</button>
+                    <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg">Save Income</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="add-expense-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('add-expense-modal')">&times;</span>
+            <h3 class="text-xl font-semibold mb-4 text-gray-800">Add New Expense</h3>
+            <form id="add-expense-form" class="space-y-3">
+                 <input type="hidden" id="edit-expense-id" name="expenseId">
+                <div>
+                    <label for="expense-modal-date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                    <input type="date" id="expense-modal-date" name="date" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div>
+                      <label for="expense-modal-category" class="block text-sm font-medium text-gray-700 mb-1">Expense Type</label>
+                      <select id="expense-modal-category" name="category" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm bg-white">
+                            <option value="">Select Type...</option>
+                            <option value="food">Food</option>
+                            <option value="toys">Toys</option>
+                            <option value="insurance">Insurance</option>
+                            <option value="supplies">Supplies</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="other">Other</option>
+                      </select>
+                 </div>
+                 <div>
+                    <label for="expense-modal-amount" class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                    <input type="number" step="0.01" id="expense-modal-amount" name="amount" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                </div>
+                 <div>
+                    <label for="expense-modal-vendor" class="block text-sm font-medium text-gray-700 mb-1">Vendor (Optional)</label>
+                    <input type="text" id="expense-modal-vendor" name="vendor" class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                </div>
+                 <div>
+                    <label for="expense-modal-description" class="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
+                    <textarea id="expense-modal-description" name="description" rows="2" class="w-full p-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+                </div>
+                 <div>
+                      <label for="expense-modal-receipt" class="block text-sm font-medium text-gray-700 mb-1">Attach Invoice/Receipt (Optional)</label>
+                      <input type="file" id="expense-modal-receipt" name="receipt" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100">
+                      <p id="receipt-file-name" class="text-xs text-gray-500 mt-1"></p>
+                 </div>
+                 <div class="flex items-center">
+                      <input id="expense-modal-personal" name="is_personal" type="checkbox" value="true" class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                      <label for="expense-modal-personal" class="ml-2 block text-sm text-gray-900">Personal expense?</label>
+                 </div>
+                 <div class="text-right pt-3"> <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg mr-2" onclick="closeModal('add-expense-modal')">Cancel</button>
+                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg">Save Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+     <div id="upload-doc-modal" class="modal">
+         <div class="modal-content">
+             <span class="modal-close" onclick="closeModal('upload-doc-modal')">&times;</span>
+             <h3 class="text-xl font-semibold mb-4 text-gray-800">Upload New Document</h3>
+             <form id="upload-doc-form" class="space-y-3">
+                 <div>
+                     <label for="doc-type" class="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
+                     <input type="text" id="doc-type" name="type" required placeholder="Example: Training certificate, insurance..." class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                 </div>
+                  <div>
+                     <label for="doc-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                     <textarea id="doc-description" name="description" rows="2" class="w-full p-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+                 </div>
+                  <div>
+                       <label for="doc-file" class="block text-sm font-medium text-gray-700 mb-1">Choose File</label>
+                       <input type="file" id="doc-file" name="document" required class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                       <p id="doc-file-name" class="text-xs text-gray-500 mt-1"></p>
+                  </div>
+                  <div class="text-right pt-3"> <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg mr-2" onclick="closeModal('upload-doc-modal')">Cancel</button>
+                     <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2 px-4 rounded-lg">Save Document</button>
+                 </div>
+             </form>
+         </div>
+     </div>
+
+
+    <script>
+        // --- Global Variables ---
+        let allParents = []; // To store fetched parents for dropdowns/display
+        let allChildren = []; // To store fetched children for dropdowns/display
+        // Define static config data (updated with English translations)
+        const configData = {
+            attendanceStatus: { "present_full": "Present (Full day)", "present_am": "Present (Morning)", "present_pm": "Present (Afternoon)", "absent_justified": "Absent (Justified)", "absent_unjustified": "Absent (Unjustified)" },
+            incomeSources: { "parent_contribution": "Parent Contribution", "govt_support": "Government Support (BC)", "late_fees": "Late Fees", "other": "Other" },
+            expenseCategories: { "food": "Food", "toys": "Toys", "insurance": "Insurance", "supplies": "Supplies", "maintenance": "Maintenance", "other": "Other" }
+        };
+
+        // --- DOM Elements ---
+        const sidebar = document.getElementById('sidebar');
+        const openSidebarButton = document.getElementById('open-sidebar');
+        const closeSidebarButton = document.getElementById('close-sidebar');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const contentSections = document.querySelectorAll('.content-section');
+        const attendanceDateInput = document.getElementById('attendance-date-input');
+        const incomeModalSourceSelect = document.getElementById('income-modal-source');
+        const incomeParentField = document.getElementById('income-parent-field');
+        const incomeBcMonthField = document.getElementById('income-bc-month-field');
+        const expenseReceiptInput = document.getElementById('expense-modal-receipt');
+        const receiptFileName = document.getElementById('receipt-file-name');
+        const docFileInput = document.getElementById('doc-file');
+        const docFileName = document.getElementById('doc-file-name');
+
+        // --- API Helper ---
+        const API_BASE_URL = ''; // Use relative paths
+
+        async function fetchAPI(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    let errorMsg = `HTTP error! status: ${response.status}`;
+                    try {
+                        const errData = await response.json();
+                        errorMsg = errData.error || errorMsg;
+                    } catch (e) { /* Ignore JSON parse error */ }
+                    throw new Error(errorMsg);
+                }
+                const contentType = response.headers.get("content-type");
+                if (response.status === 204) {
+                    return null;
+                }
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    return await response.json();
+                } else {
+                    console.warn(`Response from ${url} was not JSON.`);
+                    return await response.text();
+                }
+            } catch (error) {
+                console.error(`API Error fetching ${url}:`, error);
+                throw error;
+            }
+        }
+
+
+        // --- Functions ---
+
+        function navigateTo(sectionId) {
+            contentSections.forEach(section => section.classList.remove('active'));
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+            navLinks.forEach(link => {
+                link.classList.remove('nav-link-active');
+                if (link.getAttribute('href') === `#${sectionId}`) {
+                    link.classList.add('nav-link-active');
+                }
+            });
+             if (window.innerWidth < 768 && sidebar) {
+                  sidebar.classList.add('-translate-x-full');
+                  sidebar.classList.remove('manual-open'); // Ensure manual state is removed on navigation
+             }
+             // Update URL hash
+             window.location.hash = sectionId;
+        }
+
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = 'block';
+             // Pre-populate dropdowns if needed when opening
+             if (modalId === 'add-child-modal') loadParentOptionsForSelect('child-parent');
+             if (modalId === 'add-income-modal') loadChildOptionsForSelect('income-modal-parent-child');
+             // Reset edit IDs (ensure elements exist before accessing value)
+             const editChildIdInput = document.getElementById('edit-child-id');
+             const editParentIdInput = document.getElementById('edit-parent-id');
+             const editIncomeIdInput = document.getElementById('edit-income-id');
+             const editExpenseIdInput = document.getElementById('edit-expense-id');
+             if(editChildIdInput) editChildIdInput.value = '';
+             if(editParentIdInput) editParentIdInput.value = '';
+             if(editIncomeIdInput) editIncomeIdInput.value = '';
+             if(editExpenseIdInput) editExpenseIdInput.value = '';
+        }
+
+        // CORRECTED closeModal function
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'none';
+                 const form = modal.querySelector('form');
+                 if (form) {
+                      form.reset(); // Reset form fields
+                      // Reset conditional fields visibility for income modal
+                      if (modalId === 'add-income-modal') {
+                           const incomeParentField = document.getElementById('income-parent-field');
+                           const incomeBcMonthField = document.getElementById('income-bc-month-field');
+                           incomeParentField?.classList.add('hidden');
+                           incomeBcMonthField?.classList.add('hidden');
+                      }
+                      // Reset file input display names
+                      const receiptFileName = document.getElementById('receipt-file-name');
+                      const docFileName = document.getElementById('doc-file-name');
+                      if (modalId === 'add-expense-modal' && receiptFileName) {
+                           receiptFileName.textContent = '';
+                      }
+                      if (modalId === 'upload-doc-modal' && docFileName) {
+                           docFileName.textContent = '';
+                      }
+                      // Reset edit IDs again on close, just in case
+                      const editChildIdInput = document.getElementById('edit-child-id');
+                      const editParentIdInput = document.getElementById('edit-parent-id');
+                      const editIncomeIdInput = document.getElementById('edit-income-id');
+                      const editExpenseIdInput = document.getElementById('edit-expense-id');
+                      if(editChildIdInput) editChildIdInput.value = '';
+                      if(editParentIdInput) editParentIdInput.value = '';
+                      if(editIncomeIdInput) editIncomeIdInput.value = '';
+                      if(editExpenseIdInput) editExpenseIdInput.value = '';
+                 }
+            }
+        }
+
+
+        function calculateAge(dobString) {
+            if (!dobString) return '';
+            try {
+                const dob = new Date(dobString);
+                if (isNaN(dob.getTime())) throw new Error("Invalid Date");
+                const ageDiffMs = Date.now() - dob.getTime();
+                const ageDate = new Date(ageDiffMs);
+                const years = Math.abs(ageDate.getUTCFullYear() - 1970);
+                if (years > 0) return `${years} years`; // Updated to English
+                const today = new Date();
+                let months = today.getMonth() - dob.getMonth() + (12 * (today.getFullYear() - dob.getFullYear()));
+                if (today.getDate() < dob.getDate()) months--;
+                return months <= 0 ? `Less than a month` : `${months} months`; // Updated to English
+            } catch (e) { return '?'; }
+        }
+
+        // Get parent name from the globally stored list
+        function getParentName(parentId) {
+            const parentIdNum = parseInt(parentId, 10);
+            const parent = allParents.find(p => p.id === parentIdNum);
+            return parent ? parent.name : 'Unspecified'; // Updated to English
+        }
+
+        // --- Data Loading Functions ---
+
+        async function loadDashboardData() {
+            const nameTypeEl = document.getElementById('daycare-name-type');
+            const activeChildrenEl = document.getElementById('active-children-count');
+            const monthlyIncomeEl = document.getElementById('monthly-income');
+            const monthlyExpensesEl = document.getElementById('monthly-expenses');
+            const remindersListEl = document.getElementById('reminders-list');
+
+             // Updated Loading Text
+             if(nameTypeEl) nameTypeEl.innerHTML = `<span class="loading-text">Loading...</span>`;
+             if(activeChildrenEl) activeChildrenEl.textContent = '...';
+             if(monthlyIncomeEl) monthlyIncomeEl.textContent = '...';
+             if(monthlyExpensesEl) monthlyExpensesEl.textContent = '...';
+             if(remindersListEl) remindersListEl.innerHTML = `<li class="loading-text">Loading...</li>`;
+
+            try {
+                const [settings, children, summary] = await Promise.all([
+                    fetchAPI('/api/settings'),
+                    fetchAPI('/api/children'),
+                    fetchAPI('/api/dashboard/summary')
+                ]);
+
+                // Update dashboard elements
+                if (nameTypeEl && settings) {
+                    // Updated Text
+                    nameTypeEl.textContent = `${settings.daycare_name || 'Nursery Name'} (${settings.daycare_type === 'rsge' ? 'RSGE' : 'Private'})`;
+                }
+                if (activeChildrenEl && children) {
+                    const activeChildrenCount = children.filter(c => c.status === 'active').length;
+                    activeChildrenEl.textContent = activeChildrenCount;
+                }
+                if(monthlyIncomeEl && summary) {
+                    // Assuming MAD currency, adjust locale/currency symbol if needed
+                    monthlyIncomeEl.textContent = `${(summary.monthly_income || 0).toLocaleString('en-US', { style: 'currency', currency: 'MAD', minimumFractionDigits: 2 })}`;
+                }
+                if(monthlyExpensesEl && summary) {
+                     monthlyExpensesEl.textContent = `${(summary.monthly_expenses || 0).toLocaleString('en-US', { style: 'currency', currency: 'MAD', minimumFractionDigits: 2 })}`;
+                }
+                if(remindersListEl) {
+                    // Updated Placeholder Text
+                    remindersListEl.innerHTML = '<li class="text-gray-500">Reminders feature not active yet.</li>';
+                }
+
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                // Updated Error Text
+                if(nameTypeEl) nameTypeEl.innerHTML = `<span class="error-text">Error loading settings</span>`;
+                if(activeChildrenEl) activeChildrenEl.textContent = 'Error';
+                if(monthlyIncomeEl) monthlyIncomeEl.textContent = 'Error';
+                if(monthlyExpensesEl) monthlyExpensesEl.textContent = 'Error';
+                if(remindersListEl) remindersListEl.innerHTML = `<li class="error-text">Error loading reminders</li>`;
+            }
+        }
+
+        async function loadChildrenTable() {
+             const tbody = document.getElementById('children-table-body');
+             if (!tbody) return;
+             // Updated Loading Text
+             tbody.innerHTML = '<tr><td colspan="5" class="text-center loading-text py-4">Loading children data...</td></tr>';
+             try {
+                  const children = await fetchAPI('/api/children');
+                  if (!allParents || allParents.length === 0) {
+                       await loadParentsTable();
+                  }
+                  allChildren = children;
+                  tbody.innerHTML = '';
+
+                  if (children.length === 0) {
+                    // Updated Placeholder Text
+                       tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-4">No children currently registered.</td></tr>';
+                       return;
+                  }
+
+                  children.forEach(child => {
+                       const age = calculateAge(child.dob);
+                       const parentName = getParentName(child.parent_id);
+                       const statusClass = child.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+                       // Updated Status Text
+                       const statusText = child.status === 'active' ? 'Active' : 'Inactive';
+                       const toggleIcon = child.status === 'active' ? 'lucide-user-x' : 'lucide-user-check';
+                       // Updated Toggle Title
+                       const toggleTitle = child.status === 'active' ? 'Deactivate' : 'Activate';
+                       const toggleColor = child.status === 'active' ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700';
+
+                       tbody.innerHTML += `
+                           <tr class="border-b hover:bg-gray-50">
+                               <td>${child.first_name} ${child.last_name}</td>
+                               <td>${child.dob || '-'} (${age})</td>
+                               <td>${parentName}</td>
+                               <td><span class="${statusClass} px-2 py-1 rounded-full text-xs font-medium">${statusText}</span></td>
+                               <td class="space-x-1">
+                                   <button class="text-blue-500 hover:text-blue-700 p-1" title="Edit" onclick="openEditChildModal(${child.id})"><i class="lucide lucide-edit"></i></button>
+                                   <button class="text-green-500 hover:text-green-700 p-1" title="Record Attendance" onclick="navigateTo('attendance')"><i class="lucide lucide-clipboard-check"></i></button>
+                                   <button class="${toggleColor} p-1" title="${toggleTitle}" onclick="toggleChildStatus(${child.id}, '${child.status}')"><i class="lucide ${toggleIcon}"></i></button>
+                                   <button class="text-purple-500 hover:text-purple-700 p-1" title="Delete" onclick="deleteChild(${child.id})"><i class="lucide lucide-trash-2"></i></button>
+                               </td>
+                           </tr>
+                       `;
+                  });
+                  loadChildOptionsForSelect('income-modal-parent-child');
+             } catch (error) {
+                // Updated Error Text
+                  tbody.innerHTML = `<tr><td colspan="5" class="text-center error-text py-4">An error occurred while loading children data: ${error.message}</td></tr>`;
+             }
+        }
+
+        async function loadParentsTable() {
+            const tbody = document.getElementById('parents-table-body');
+            if (!tbody) return;
+            // Updated Loading Text
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center loading-text py-4">Loading parents data...</td></tr>';
+            try {
+                const parents = await fetchAPI('/api/parents');
+                allParents = parents;
+                tbody.innerHTML = '';
+
+                if (parents.length === 0) {
+                    // Updated Placeholder Text
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-500 py-4">No parents currently registered.</td></tr>';
+                    return;
+                }
+
+                parents.forEach(parent => {
+                    tbody.innerHTML += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td>${parent.name}</td>
+                            <td>${parent.phone || '-'}</td>
+                            <td>${parent.email || '-'}</td>
+                             <td class="space-x-1">
+                                <button class="text-blue-500 hover:text-blue-700 p-1" title="Edit" onclick="openEditParentModal(${parent.id})"><i class="lucide lucide-edit"></i></button>
+                                <button class="text-gray-400 p-1 cursor-not-allowed" title="View associated children (Not implemented)"><i class="lucide lucide-users"></i></button>
+                                <button class="text-red-500 hover:text-red-700 p-1" title="Delete" onclick="deleteParent(${parent.id})"><i class="lucide lucide-trash-2"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                loadParentOptionsForSelect('child-parent');
+            } catch (error) {
+                 // Updated Error Text
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center error-text py-4">An error occurred while loading parents data: ${error.message}</td></tr>`;
+            }
+        }
+
+        async function loadIncomeTable(filters = {}) {
+            const tbody = document.getElementById('income-table-body');
+            if (!tbody) return;
+             // Updated Loading Text
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center loading-text py-4">Loading income...</td></tr>';
+            try {
+                const queryParams = new URLSearchParams(filters).toString();
+                const incomeRecords = await fetchAPI(`/api/income?${queryParams}`);
+                if (!allChildren || allChildren.length === 0) {
+                    await loadChildrenTable();
+                }
+                tbody.innerHTML = '';
+
+                if (incomeRecords.length === 0) {
+                    // Updated Placeholder Text
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 py-4">No income recorded for this period.</td></tr>';
+                    return;
+                }
+
+                incomeRecords.forEach(item => {
+                    const sourceText = configData.incomeSources[item.source] || item.source;
+                    let relatedText = item.first_name ? `${item.first_name} ${item.last_name}` : '-';
+                    if (item.related_child_id && !item.first_name) {
+                        const child = allChildren.find(c => c.id === item.related_child_id);
+                        // Updated Text
+                        relatedText = child ? `${child.first_name} ${child.last_name}` : `(Child #${item.related_child_id})`;
+                    }
+
+                    tbody.innerHTML += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td>${item.date}</td>
+                            <td>${sourceText}</td>
+                            <td class="text-green-600 font-medium">${item.amount.toLocaleString('en-US', { style: 'currency', currency: 'MAD', minimumFractionDigits: 2 })}</td>
+                            <td>${relatedText}</td>
+                            <td>${item.description || '-'}</td>
+                             <td class="space-x-1">
+                                <button class="text-blue-500 hover:text-blue-700 p-1" title="Edit" onclick="openEditIncomeModal(${item.id})"><i class="lucide lucide-edit"></i></button>
+                                <button class="text-red-500 hover:text-red-700 p-1" title="Delete" onclick="deleteIncome(${item.id})"><i class="lucide lucide-trash-2"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                 // Updated Error Text
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center error-text py-4">An error occurred while loading income: ${error.message}</td></tr>`;
+            }
+        }
+
+        async function loadExpensesTable(filters = {}) {
+            const tbody = document.getElementById('expenses-table-body');
+            if (!tbody) return;
+             // Updated Loading Text
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center loading-text py-4">Loading expenses...</td></tr>';
+            try {
+                const queryParams = new URLSearchParams(filters).toString();
+                const expenses = await fetchAPI(`/api/expenses?${queryParams}`);
+                tbody.innerHTML = '';
+
+                if (expenses.length === 0) {
+                    // Updated Placeholder Text
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-gray-500 py-4">No expenses recorded for this period.</td></tr>';
+                    return;
+                }
+
+                expenses.forEach(item => {
+                    const categoryText = configData.expenseCategories[item.category] || item.category;
+                    // Updated Tooltips
+                    const receiptIcon = item.receipt_filename
+                        ? `<a href="/uploads/${item.receipt_filename}" target="_blank" title="View Invoice/Receipt (${item.receipt_filename})"><i class="lucide lucide-receipt text-green-500"></i></a>`
+                        : '<i class="lucide lucide-circle-slash-2 text-gray-400" title="No Invoice/Receipt"></i>';
+
+                    tbody.innerHTML += `
+                        <tr class="border-b hover:bg-gray-50 ${item.is_personal ? 'opacity-70 italic' : ''}">
+                            <td>${item.date}</td>
+                            <td>${categoryText} ${item.is_personal ? '<span class="text-xs text-red-500">(Personal)</span>' : ''}</td>
+                            <td class="text-red-600 font-medium">${item.amount.toLocaleString('en-US', { style: 'currency', currency: 'MAD', minimumFractionDigits: 2 })}</td>
+                            <td>${item.vendor || '-'}</td>
+                            <td>${item.description || '-'}</td>
+                            <td class="text-center">${receiptIcon}</td>
+                            <td class="space-x-1">
+                                <button class="text-blue-500 hover:text-blue-700 p-1" title="Edit" onclick="openEditExpenseModal(${item.id})"><i class="lucide lucide-edit"></i></button>
+                                <button class="text-red-500 hover:text-red-700 p-1" title="Delete" onclick="deleteExpense(${item.id})"><i class="lucide lucide-trash-2"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                 // Updated Error Text
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center error-text py-4">An error occurred while loading expenses: ${error.message}</td></tr>`;
+            }
+        }
+
+        async function loadAttendanceList() {
+             const listDiv = document.getElementById('attendance-list');
+             const selectedDate = attendanceDateInput.value;
+             if (!listDiv || !selectedDate) return;
+              // Updated Loading Text
+             listDiv.innerHTML = '<p class="loading-text">Loading Children List...</p>';
+             try {
+                  const [children, attendanceData] = await Promise.all([
+                       fetchAPI('/api/children'),
+                       fetchAPI(`/api/attendance?date=${selectedDate}`)
+                  ]);
+
+                  const activeChildren = children.filter(c => c.status === 'active');
+                  listDiv.innerHTML = '';
+
+                  if (activeChildren.length === 0) {
+                    // Updated Placeholder Text
+                       listDiv.innerHTML = '<p class="text-gray-500">No active children to record attendance for.</p>';
+                       return;
+                  }
+
+                  const attendanceMap = attendanceData || {};
+
+                  activeChildren.forEach(child => {
+                       const existingRecord = attendanceMap[child.id] || {};
+                       const existingStatus = existingRecord.status || '';
+                       const existingNotes = existingRecord.notes || '';
+
+                        // Updated Default Option Text
+                       let optionsHtml = '<option value="">-- Select Status --</option>';
+                       for (const [value, text] of Object.entries(configData.attendanceStatus)) {
+                            optionsHtml += `<option value="${value}" ${existingStatus === value ? 'selected' : ''}>${text}</option>`;
+                       }
+
+                       listDiv.innerHTML += `
+                           <div class="attendance-row flex items-center justify-between border-b pb-3 gap-4 flex-wrap" data-child-id="${child.id}">
+                               <span class="text-gray-800 font-medium">${child.first_name} ${child.last_name}</span>
+                               <div class="flex items-center gap-2 flex-wrap">
+                                   <select name="status" class="attendance-status p-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm w-48">
+                                       ${optionsHtml}
+                                   </select>
+                                   <input type="text" name="notes" placeholder="Notes..." class="attendance-notes p-2 border border-gray-300 rounded-md shadow-sm text-sm w-40" value="${existingNotes}">
+                               </div>
+                           </div>
+                       `;
+                  });
+             } catch(error) {
+                 // Updated Error Text
+                  listDiv.innerHTML = `<p class="error-text">An error occurred while loading the attendance list: ${error.message}</p>`;
+             }
+        }
+
+
+        async function loadDocumentsTable() {
+            const tbody = document.getElementById('documents-table-body');
+             if (!tbody) return;
+             // Updated Loading Text
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center loading-text py-4">Loading documents...</td></tr>';
+            try {
+                const documents = await fetchAPI('/api/documents');
+                tbody.innerHTML = '';
+
+                 if (documents.length === 0) {
+                    // Updated Placeholder Text
+                      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-500 py-4">No documents currently uploaded.</td></tr>';
+                      return;
+                 }
+
+                documents.forEach(doc => {
+                    tbody.innerHTML += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td>${doc.type}</td>
+                            <td>${doc.description || '-'}</td>
+                            <td>${doc.upload_date}</td>
+                            <td class="space-x-1">
+                                <a href="/uploads/${doc.filename}" target="_blank" class="text-blue-500 hover:text-blue-700 p-1" title="View/Download"><i class="lucide lucide-download"></i></a>
+                                <button class="text-red-500 hover:text-red-700 p-1" title="Delete" onclick="deleteDocument(${doc.id})"><i class="lucide lucide-trash-2"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                // Updated Error Text
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center error-text py-4">An error occurred while loading documents: ${error.message}</td></tr>`;
+                 console.error("Error loading documents:", error);
+            }
+        }
+
+        async function loadSettingsForm() {
+            const form = document.getElementById('settings-form');
+            if (!form) return;
+            try {
+                const settings = await fetchAPI('/api/settings');
+                for (const key in settings) {
+                    const inputName = key === 'home_usage' ? 'home_usage_percentage'
+                                     : key === 'car_usage' ? 'car_usage_percentage'
+                                     : key;
+                    const input = form.elements[inputName];
+                    if (input) {
+                        if (input.type === 'radio') {
+                            const radioWithValue = form.querySelector(`input[name="${inputName}"][value="${settings[key]}"]`);
+                            if (radioWithValue) radioWithValue.checked = true;
+                        } else if (input.type === 'checkbox') {
+                             input.checked = settings[key] === 'true' || settings[key] === '1';
+                        }
+                        else {
+                            input.value = settings[key];
+                        }
+                    }
+                }
+                 const nameTypeEl = document.getElementById('daycare-name-type');
+                 if(nameTypeEl && settings.daycare_name) {
+                     // Updated Text
+                     nameTypeEl.textContent = `${settings.daycare_name} (${settings.daycare_type === 'rsge' ? 'RSGE' : 'Private'})`;
+                 }
+            } catch (error) {
+                console.error("Error loading settings:", error);
+                 // Updated Alert Text
+                alert(`An error occurred while loading settings: ${error.message}`);
+            }
+        }
+
+        // Helper to populate select dropdowns (updated prompts)
+        function populateSelect(selectId, options, valueField = 'id', textField = 'name', prompt = 'Select...') {
+             const selectElement = document.getElementById(selectId);
+             if (!selectElement) return;
+             const currentValue = selectElement.value;
+             selectElement.innerHTML = `<option value="">${prompt}</option>`;
+             options.forEach(option => {
+                  const isSelected = option[valueField] == currentValue;
+                  selectElement.innerHTML += `<option value="${option[valueField]}" ${isSelected ? 'selected' : ''}>${option[textField]}</option>`;
+             });
+        }
+
+        // Specific function to load parent options into a select element (updated prompt)
+        function loadParentOptionsForSelect(selectId) {
+            populateSelect(selectId, allParents, 'id', 'name', 'Select Parent/Guardian...');
+        }
+         // Specific function to load child options into a select element (updated prompt)
+         function loadChildOptionsForSelect(selectId) {
+              const childOptions = allChildren.map(c => ({ id: c.id, name: `${c.first_name} ${c.last_name}` }));
+              populateSelect(selectId, childOptions, 'id', 'name', 'Select Child...');
+         }
+
+
+        // --- Event Listeners ---
+
+        openSidebarButton?.addEventListener('click', () => {
+            sidebar?.classList.remove('-translate-x-full');
+            sidebar?.classList.add('manual-open'); // Mark as manually opened
+        });
+        closeSidebarButton?.addEventListener('click', () => {
+            sidebar?.classList.add('-translate-x-full');
+            sidebar?.classList.remove('manual-open'); // Remove manual state
+        });
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.getAttribute('href')?.substring(1);
+                if(sectionId) navigateTo(sectionId);
+            });
+        });
+
+        // Close modal if clicking outside the content area
+        window.addEventListener('click', (event) => {
+            if (event.target.classList.contains('modal')) {
+                closeModal(event.target.id);
+            }
+        });
+
+        // Set initial date for attendance and add listener
+        if (attendanceDateInput) {
+            attendanceDateInput.value = new Date().toISOString().split('T')[0];
+            attendanceDateInput.addEventListener('change', loadAttendanceList);
+        }
+
+        // Show/hide conditional fields in income modal based on source
+        incomeModalSourceSelect?.addEventListener('change', (e) => {
+             const showParent = e.target.value === 'parent_contribution';
+             const showBC = e.target.value === 'govt_support';
+             incomeParentField?.classList.toggle('hidden', !showParent);
+             incomeBcMonthField?.classList.toggle('hidden', !showBC);
+             if (!showParent) {
+                  const parentSelect = document.getElementById('income-modal-parent-child');
+                  if(parentSelect) parentSelect.value = '';
+             }
+             if (!showBC) {
+                  const bcInput = document.getElementById('income-modal-bc-month');
+                  if(bcInput) bcInput.value = '';
+             }
+        });
+
+        // Display selected filename for expense receipt
+        expenseReceiptInput?.addEventListener('change', (e) => {
+            if(receiptFileName) receiptFileName.textContent = e.target.files[0]?.name || '';
+        });
+        // Display selected filename for document upload
+        docFileInput?.addEventListener('change', (e) => {
+            if(docFileName) docFileName.textContent = e.target.files[0]?.name || '';
+        });
+
+        // Filter button listeners
+        document.getElementById('filter-income-btn')?.addEventListener('click', () => {
+            const filters = {
+                from: document.getElementById('income-date-from').value,
+                to: document.getElementById('income-date-to').value,
+                source: document.getElementById('income-source').value
+            };
+            Object.keys(filters).forEach(key => (!filters[key]) && delete filters[key]);
+            loadIncomeTable(filters);
+        });
+
+        document.getElementById('filter-expenses-btn')?.addEventListener('click', () => {
+             const filters = {
+                  from: document.getElementById('expense-date-from').value,
+                  to: document.getElementById('expense-date-to').value,
+                  category: document.getElementById('expense-category').value
+             };
+             Object.keys(filters).forEach(key => (!filters[key]) && delete filters[key]);
+             loadExpensesTable(filters);
+        });
+
+        // --- Form Submissions (Using API) ---
+
+        // Add/Edit Child Form Submission
+        document.getElementById('add-child-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const childData = {};
+            formData.forEach((value, key) => {
+                childData[key] = value;
+            });
+
+            childData.parent_id = childData.parent_id ? parseInt(childData.parent_id, 10) : null;
+            if (isNaN(childData.parent_id) && childData.parent_id !== null) {
+                // Updated Alert Text
+                alert("Invalid Parent ID.");
+                return;
+            }
+
+            const childId = childData.childId;
+            const method = childId ? 'PUT' : 'POST';
+            const endpoint = childId ? `/api/children/${childId}` : '/api/children';
+            delete childData.childId;
+
+            try {
+                await fetchAPI(endpoint, {
+                    method: method,
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(childData)
+                });
+                // Updated Alert Text
+                alert(childId ? "Child updated successfully!" : "Child added successfully!");
+                closeModal('add-child-modal');
+                await Promise.all([loadChildrenTable(), loadDashboardData()]);
+            } catch (error) {
+                console.error('Error saving child:', error);
+                // Updated Alert Text
+                alert(`An error occurred while saving the child: ${error.message}`);
+            }
+        });
+
+        // Add/Edit Parent Form Submission
+        document.getElementById('add-parent-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const parentData = Object.fromEntries(formData.entries());
+            const parentId = parentData.parentId;
+            const method = parentId ? 'PUT' : 'POST';
+            const endpoint = parentId ? `/api/parents/${parentId}` : '/api/parents';
+            delete parentData.parentId;
+
+             try {
+                  await fetchAPI(endpoint, {
+                       method: method,
+                       headers: {'Content-Type': 'application/json'},
+                       body: JSON.stringify(parentData)
+                  });
+                  // Updated Alert Text
+                  alert(parentId ? "Parent/Guardian updated successfully!" : "Parent/Guardian added successfully!");
+                  closeModal('add-parent-modal');
+                  await loadParentsTable();
+                  loadParentOptionsForSelect('child-parent');
+             } catch (error) {
+                  console.error('Error saving parent:', error);
+                  // Updated Alert Text
+                  if (error.message.includes('409')) {
+                       alert("Error: Email already in use.");
+                  } else {
+                       alert(`An error occurred while saving the parent/guardian: ${error.message}`);
+                  }
+             }
+        });
+
+        // Add/Edit Income Form Submission
+        document.getElementById('add-income-form')?.addEventListener('submit', async (e) => {
+             e.preventDefault();
+             const form = e.target;
+             const formData = new FormData(form);
+             const incomeData = {};
+             formData.forEach((value, key) => {
+                  incomeData[key] = value;
+             });
+
+             incomeData.amount = parseFloat(incomeData.amount);
+             incomeData.related_child_id = incomeData.related_child_id ? parseInt(incomeData.related_child_id, 10) : null;
+             incomeData.related_parent_id = null;
+
+             const incomeId = incomeData.incomeId;
+             const method = incomeId ? 'PUT' : 'POST';
+             const endpoint = incomeId ? `/api/income/${incomeId}` : '/api/income';
+             delete incomeData.incomeId;
+
+             if (isNaN(incomeData.amount) || incomeData.amount < 0) {
+                // Updated Alert Text
+                  alert("Invalid amount.");
+                  return;
+             }
+
+             try {
+                  await fetchAPI(endpoint, {
+                       method: method,
+                       headers: {'Content-Type': 'application/json'},
+                       body: JSON.stringify(incomeData)
+                  });
+                  // Updated Alert Text
+                  alert(incomeId ? "Income updated successfully!" : "Income added successfully!");
+                  closeModal('add-income-modal');
+                  await Promise.all([loadIncomeTable(), loadDashboardData()]);
+             } catch (error) {
+                  console.error('Error saving income:', error);
+                  // Updated Alert Text
+                  alert(`An error occurred while saving income: ${error.message}`);
+             }
+        });
+
+        // Add/Edit Expense Form Submission
+        document.getElementById('add-expense-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const expenseId = formData.get('expenseId');
+            formData.set('is_personal', form.elements['is_personal'].checked ? 'true' : 'false');
+
+            const method = expenseId ? 'PUT' : 'POST';
+            const endpoint = expenseId ? `/api/expenses/${expenseId}` : '/api/expenses';
+
+            if (method === 'PUT') {
+                 const expenseData = {};
+                 formData.forEach((value, key) => {
+                      if (key !== 'receipt' && key !== 'expenseId') {
+                           expenseData[key] = value;
+                      }
+                 });
+                 expenseData.amount = parseFloat(expenseData.amount);
+                 expenseData.is_personal = expenseData.is_personal === 'true';
+
+                 if (isNaN(expenseData.amount) || expenseData.amount < 0) {
+                    // Updated Alert Text
+                      alert("Invalid amount."); return;
+                 }
+
+                 try {
+                      await fetchAPI(endpoint, {
+                           method: 'PUT',
+                           headers: {'Content-Type': 'application/json'},
+                           body: JSON.stringify(expenseData)
+                      });
+                      // Updated Alert Text
+                      alert("Expense updated successfully!");
+                      closeModal('add-expense-modal');
+                      await Promise.all([loadExpensesTable(), loadDashboardData()]);
+                 } catch (error) {
+                      console.error('Error updating expense:', error);
+                      // Updated Alert Text
+                      alert(`An error occurred while updating the expense: ${error.message}`);
+                 }
+            } else { // POST
+                 formData.delete('expenseId');
+                  const amount = parseFloat(formData.get('amount'));
+                  if (isNaN(amount) || amount < 0) {
+                    // Updated Alert Text
+                       alert("Invalid amount."); return;
+                  }
+                 try {
+                      await fetchAPI(endpoint, { method: 'POST', body: formData });
+                      // Updated Alert Text
+                      alert("Expense added successfully!");
+                      closeModal('add-expense-modal');
+                      await Promise.all([loadExpensesTable(), loadDashboardData()]);
+                 } catch (error) {
+                      console.error('Error adding expense:', error);
+                      // Updated Alert Text
+                      alert(`An error occurred while adding the expense: ${error.message}`);
+                 }
+            }
+        });
+
+        // Document Upload Form Submission
+        document.getElementById('upload-doc-form')?.addEventListener('submit', async (e) => {
+             e.preventDefault();
+             const form = e.target;
+             const formData = new FormData(form);
+             try {
+                  await fetchAPI('/api/documents', { method: 'POST', body: formData });
+                  // Updated Alert Text
+                  alert("Document uploaded successfully!");
+                  closeModal('upload-doc-modal');
+                  await loadDocumentsTable();
+             } catch (error) {
+                  console.error('Error uploading document:', error);
+                  // Updated Alert Text
+                  alert(`An error occurred while uploading the document: ${error.message}`);
+             }
+        });
+
+        // Settings Form Submission
+        document.getElementById('settings-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const settingsData = Object.fromEntries(formData.entries());
+            settingsData.home_usage = settingsData.home_usage_percentage;
+            settingsData.car_usage = settingsData.car_usage_percentage;
+            delete settingsData.home_usage_percentage;
+            delete settingsData.car_usage_percentage;
+
+             try {
+                  await fetchAPI('/api/settings', {
+                       method: 'POST',
+                       headers: {'Content-Type': 'application/json'},
+                       body: JSON.stringify(settingsData)
+                  });
+                  // Updated Alert Text
+                  alert("Settings saved successfully!");
+                  await loadSettingsForm();
+                  await loadDashboardData();
+             } catch (error) {
+                  console.error('Error saving settings:', error);
+                  // Updated Alert Text
+                  alert(`An error occurred while saving settings: ${error.message}`);
+             }
+        });
+
+        // Save Attendance Button Listener
+        document.getElementById('save-attendance-btn')?.addEventListener('click', async () => {
+            const attendanceDate = attendanceDateInput.value;
+            if (!attendanceDate) {
+                // Updated Alert Text
+                alert("Please select a date first.");
+                return;
+            }
+            const attendancePayload = {};
+            const rows = document.querySelectorAll('#attendance-list .attendance-row');
+
+            rows.forEach(row => {
+                const childId = row.dataset.childId;
+                const statusSelect = row.querySelector('select[name="status"]');
+                const notesInput = row.querySelector('input[name="notes"]');
+
+                if (childId && statusSelect && statusSelect.value) {
+                     attendancePayload[childId] = {
+                          status: statusSelect.value,
+                          notes: notesInput ? notesInput.value : ''
+                     };
+                } else if (childId && statusSelect && !statusSelect.value) {
+                     console.log(`Child ${childId} status not set.`);
+                }
+            });
+
+            if (Object.keys(attendancePayload).length === 0) {
+                // Updated Alert Text
+                alert("No attendance data to send (ensure a status is selected for each child).");
+                return;
+            }
+
+            const payload = {
+                date: attendanceDate,
+                attendance: attendancePayload
+            };
+
+            console.log("Sending attendance data:", JSON.stringify(payload));
+            try {
+                const result = await fetchAPI('/api/attendance', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                console.log("Attendance saved:", result);
+                // Updated Alert Text
+                alert("Attendance saved successfully!");
+            } catch (error) {
+                console.error('Error saving attendance:', error);
+                // Updated Alert Text
+                alert(`An error occurred while saving attendance: ${error.message}`);
+            }
+        });
+
+
+        // --- Delete Functions (Updated Confirmation Messages) ---
+        async function deleteChild(childId) {
+            if (!confirm(`Are you sure you want to delete child number ${childId}? This will also delete associated attendance records and reports.`)) return;
+            try {
+                await fetchAPI(`/api/children/${childId}`, { method: 'DELETE' });
+                alert('Child deleted successfully.');
+                await Promise.all([loadChildrenTable(), loadDashboardData(), loadIncomeTable(), loadAttendanceList()]);
+            } catch (error) {
+                alert(`Error deleting child: ${error.message}`);
+            }
+        }
+         async function deleteParent(parentId) {
+             if (!confirm(`Are you sure you want to delete parent/guardian number ${parentId}?`)) return;
+             try {
+                 await fetchAPI(`/api/parents/${parentId}`, { method: 'DELETE' });
+                 alert('Parent/Guardian deleted successfully.');
+                 await loadParentsTable();
+                 await loadChildrenTable();
+                 loadParentOptionsForSelect('child-parent');
+             } catch (error) {
+                  if (error.message.includes('409')) {
+                       alert("Cannot delete parent/guardian as they are linked to at least one child.");
+                  } else {
+                       alert(`Error deleting parent/guardian: ${error.message}`);
+                  }
+             }
+         }
+          async function deleteIncome(incomeId) {
+              if (!confirm(`Are you sure you want to delete income record number ${incomeId}?`)) return;
+              try {
+                  await fetchAPI(`/api/income/${incomeId}`, { method: 'DELETE' });
+                  alert('Income record deleted successfully.');
+                  await Promise.all([loadIncomeTable(), loadDashboardData()]);
+              } catch (error) {
+                  alert(`Error deleting income record: ${error.message}`);
+              }
+          }
+          async function deleteExpense(expenseId) {
+              if (!confirm(`Are you sure you want to delete expense record number ${expenseId}? The attached invoice/receipt will also be deleted if it exists.`)) return;
+              try {
+                  await fetchAPI(`/api/expenses/${expenseId}`, { method: 'DELETE' });
+                  alert('Expense record deleted successfully.');
+                  await Promise.all([loadExpensesTable(), loadDashboardData()]);
+              } catch (error) {
+                  alert(`Error deleting expense record: ${error.message}`);
+              }
+          }
+          async function deleteDocument(docId) {
+               if (!confirm(`Are you sure you want to delete document number ${docId}? The associated file will also be deleted.`)) return;
+               try {
+                    await fetchAPI(`/api/documents/${docId}`, { method: 'DELETE' });
+                    alert('Document deleted successfully.');
+                    await loadDocumentsTable();
+               } catch (error) {
+                    console.error('Error deleting document:', error);
+                    alert(`Error deleting document: ${error.message}`);
+               }
+          }
+
+          // --- Implemented Action Functions (Updated Confirmation Messages) ---
+          async function toggleChildStatus(childId, currentStatus) {
+               const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+               const statusText = newStatus === 'active' ? 'Active' : 'Inactive';
+               if (!confirm(`Are you sure you want to change the status of child number ${childId} to ${statusText}?`)) return;
+
+               try {
+                    await fetchAPI(`/api/children/${childId}/status`, {
+                         method: 'PUT',
+                         headers:{'Content-Type':'application/json'},
+                         body: JSON.stringify({ status: newStatus })
+                    });
+                    alert(`Child status changed to ${statusText}.`);
+                    await Promise.all([loadChildrenTable(), loadDashboardData(), loadAttendanceList()]);
+               } catch (error) {
+                    alert(`Error changing child status: ${error.message}`);
+               }
+          }
+
+          // --- Placeholder Action Functions (Edit Modals - Updated Alert Text) ---
+          // These need full implementation: fetch data, populate modal, handle PUT on submit
+          async function openEditChildModal(childId) {
+              // alert(`(Simulation) Open edit child ${childId} - Needs full implementation (fetch data, fill form, send PUT)`);
+              try {
+                  const child = await fetchAPI(`/api/children/${childId}`);
+                  if (!child) throw new Error('Child not found');
+                  const modal = document.getElementById('add-child-modal');
+                  const form = document.getElementById('add-child-form');
+                  if (!modal || !form) return;
+
+                  // Populate form
+                  form.elements['childId'].value = child.id;
+                  form.elements['first_name'].value = child.first_name || '';
+                  form.elements['last_name'].value = child.last_name || '';
+                  form.elements['dob'].value = child.dob || '';
+                  // Ensure parent options are loaded before setting value
+                  await loadParentOptionsForSelect('child-parent');
+                  form.elements['parent_id'].value = child.parent_id || '';
+                  form.elements['emergency_contact'].value = child.emergency_contact || '';
+                  form.elements['allergies'].value = child.allergies || '';
+                  form.elements['notes'].value = child.notes || '';
+
+                  // Change title (optional)
+                  modal.querySelector('h3').textContent = 'Edit Child';
+
+                  modal.style.display = 'block';
+              } catch (error) {
+                  console.error('Error opening edit child modal:', error);
+                  alert(`Error loading child data: ${error.message}`);
+              }
+          }
+          async function openEditParentModal(parentId) {
+              // alert(`(Simulation) Open edit parent/guardian ${parentId} - Needs full implementation`);
+              try {
+                  const parent = await fetchAPI(`/api/parents/${parentId}`);
+                  if (!parent) throw new Error('Parent not found');
+                  const modal = document.getElementById('add-parent-modal');
+                  const form = document.getElementById('add-parent-form');
+                  if (!modal || !form) return;
+
+                  // Populate form
+                  form.elements['parentId'].value = parent.id;
+                  form.elements['name'].value = parent.name || '';
+                  form.elements['phone'].value = parent.phone || '';
+                  form.elements['email'].value = parent.email || '';
+                  form.elements['address'].value = parent.address || '';
+
+                  // Change title (optional)
+                  modal.querySelector('h3').textContent = 'Edit Parent/Guardian';
+
+                  modal.style.display = 'block';
+              } catch (error) {
+                  console.error('Error opening edit parent modal:', error);
+                  alert(`Error loading parent data: ${error.message}`);
+              }
+          }
+          async function openEditIncomeModal(incomeId) {
+              // alert(`(Simulation) Open edit income ${incomeId} - Needs full implementation`);
+               try {
+                  const income = await fetchAPI(`/api/income/${incomeId}`);
+                  if (!income) throw new Error('Income record not found');
+                  const modal = document.getElementById('add-income-modal');
+                  const form = document.getElementById('add-income-form');
+                  if (!modal || !form) return;
+
+                  // Populate form
+                  form.elements['incomeId'].value = income.id;
+                  form.elements['date'].value = income.date || '';
+                  form.elements['source'].value = income.source || '';
+                  form.elements['amount'].value = income.amount || '';
+                  form.elements['description'].value = income.description || '';
+                  form.elements['bc_month'].value = income.bc_month || ''; // Populate BC month if exists
+
+                  // Ensure child options are loaded before setting value
+                  await loadChildOptionsForSelect('income-modal-parent-child');
+                  form.elements['related_child_id'].value = income.related_child_id || '';
+
+                  // Trigger change event on source select to show/hide conditional fields
+                  incomeModalSourceSelect.dispatchEvent(new Event('change'));
+
+                  // Change title (optional)
+                  modal.querySelector('h3').textContent = 'Edit Income';
+
+                  modal.style.display = 'block';
+              } catch (error) {
+                  console.error('Error opening edit income modal:', error);
+                  alert(`Error loading income data: ${error.message}`);
+              }
+          }
+          async function openEditExpenseModal(expenseId) {
+              // alert(`(Simulation) Open edit expense ${expenseId} - Needs full implementation (Note: updating the invoice is not currently supported)`);
+              try {
+                  const expense = await fetchAPI(`/api/expenses/${expenseId}`);
+                  if (!expense) throw new Error('Expense record not found');
+                  const modal = document.getElementById('add-expense-modal');
+                  const form = document.getElementById('add-expense-form');
+                  if (!modal || !form) return;
+
+                  // Populate form
+                  form.elements['expenseId'].value = expense.id;
+                  form.elements['date'].value = expense.date || '';
+                  form.elements['category'].value = expense.category || '';
+                  form.elements['amount'].value = expense.amount || '';
+                  form.elements['vendor'].value = expense.vendor || '';
+                  form.elements['description'].value = expense.description || '';
+                  form.elements['is_personal'].checked = expense.is_personal || false;
+
+                  // Display existing receipt filename, but disable file input for edit
+                  const receiptInput = form.elements['receipt'];
+                  const receiptFileNameDisplay = document.getElementById('receipt-file-name');
+                  if (receiptInput) receiptInput.disabled = true; // Disable changing file on edit
+                  if (receiptFileNameDisplay) {
+                      receiptFileNameDisplay.textContent = expense.receipt_filename ? `Current: ${expense.receipt_filename} (Cannot change)` : 'No receipt attached';
+                  }
+
+
+                  // Change title (optional)
+                  modal.querySelector('h3').textContent = 'Edit Expense';
+
+                  modal.style.display = 'block';
+              } catch (error) {
+                  console.error('Error opening edit expense modal:', error);
+                  alert(`Error loading expense data: ${error.message}`);
+              }
+          }
+
+
+        // --- Initial Load ---
+        async function loadAllInitialData() {
+             console.log("Loading initial data...");
+             const resultsParentsChildren = await Promise.allSettled([
+                  loadParentsTable(),
+                  loadChildrenTable()
+             ]);
+             resultsParentsChildren.forEach(result => {
+                  if (result.status === 'rejected') console.error("Initial load error (parents/children):", result.reason);
+             });
+             console.log("Parents and Children load attempt complete.");
+
+             await Promise.allSettled([
+                  loadDashboardData(),
+                  loadIncomeTable(),
+                  loadExpensesTable(),
+                  loadAttendanceList(),
+                  loadDocumentsTable(),
+                  loadSettingsForm()
+             ]).then(results => {
+                  results.forEach(result => {
+                       if (result.status === 'rejected') console.error("Initial load error (other sections):", result.reason);
+                  });
+             });
+             console.log("Initial data loading attempt complete for all sections.");
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllInitialData().then(() => {
+                 if (attendanceDateInput && !attendanceDateInput.value) {
+                      attendanceDateInput.value = new Date().toISOString().split('T')[0];
+                 }
+                 const initialSection = window.location.hash ? window.location.hash.substring(1) : 'dashboard';
+                 setTimeout(() => navigateTo(initialSection || 'dashboard'), 100);
+            }).catch(error => {
+                 console.error("Error during initial data loading sequence:", error);
+                 // Updated Alert Text
+                 alert("A critical error occurred during initial data loading. Please check the server connection and reload the page.");
+            });
+
+             // Initial sidebar state based on screen size
+             if (window.innerWidth < 768) sidebar?.classList.add('-translate-x-full');
+             else sidebar?.classList.remove('-translate-x-full');
+        });
+
+        // Handle sidebar visibility on resize
+        window.addEventListener('resize', () => {
+             if (!sidebar) return;
+             if (window.innerWidth >= 768) {
+                 sidebar.classList.remove('-translate-x-full');
+                 sidebar.classList.remove('manual-open'); // Remove manual state on resize to desktop
+             } else {
+                 // Only hide if it wasn't manually opened on mobile
+                 if (!sidebar.classList.contains('manual-open')) {
+                     sidebar.classList.add('-translate-x-full');
+                 }
+             }
+        });
+
+    </script>
+
+</body>
+</html>
